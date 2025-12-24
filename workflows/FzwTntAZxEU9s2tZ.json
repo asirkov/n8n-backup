@@ -1,9 +1,9 @@
 {
   "active": true,
   "activeVersion": {
-    "updatedAt": "2025-12-24T12:58:16.000Z",
-    "createdAt": "2025-12-24T12:57:46.518Z",
-    "versionId": "10f0f6c1-0fd5-41ff-b92b-2ae461bba06a",
+    "updatedAt": "2025-12-24T13:38:25.000Z",
+    "createdAt": "2025-12-24T13:38:22.097Z",
+    "versionId": "867432ba-dca0-47ac-af65-21a02914e57b",
     "workflowId": "FzwTntAZxEU9s2tZ",
     "nodes": [
       {
@@ -39,9 +39,7 @@
         "name": "Respond to Webhook"
       },
       {
-        "parameters": {
-          "amount": 10
-        },
+        "parameters": {},
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
@@ -99,10 +97,10 @@
       }
     },
     "authors": "Oleksandr Sirkov",
-    "name": "Version 10f0f6c1",
-    "description": "Deactivate unused node"
+    "name": "Version 867432ba",
+    "description": ""
   },
-  "activeVersionId": "10f0f6c1-0fd5-41ff-b92b-2ae461bba06a",
+  "activeVersionId": "867432ba-dca0-47ac-af65-21a02914e57b",
   "connections": {
     "Webhook": {
       "main": [
@@ -171,9 +169,7 @@
       "name": "Respond to Webhook"
     },
     {
-      "parameters": {
-        "amount": 10
-      },
+      "parameters": {},
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
@@ -216,6 +212,6 @@
   "staticData": null,
   "tags": [],
   "triggerCount": 1,
-  "updatedAt": "2025-12-24T12:59:24.431Z",
-  "versionId": "10f0f6c1-0fd5-41ff-b92b-2ae461bba06a"
+  "updatedAt": "2025-12-24T13:38:22.095Z",
+  "versionId": "867432ba-dca0-47ac-af65-21a02914e57b"
 }
