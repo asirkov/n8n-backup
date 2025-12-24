@@ -1,0 +1,221 @@
+{
+  "active": true,
+  "activeVersion": {
+    "updatedAt": "2025-12-24T12:58:16.000Z",
+    "createdAt": "2025-12-24T12:57:46.518Z",
+    "versionId": "10f0f6c1-0fd5-41ff-b92b-2ae461bba06a",
+    "workflowId": "FzwTntAZxEU9s2tZ",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "ab11248a-02c8-4383-a487-39f66e808f28",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          -80,
+          -16
+        ],
+        "id": "101ec4e6-5b9b-4f81-84fd-72b2c436b20b",
+        "name": "Webhook",
+        "webhookId": "ab11248a-02c8-4383-a487-39f66e808f28"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={\n  \"greeting\": \"Hello, {{$json.body.name || \"stranger\"}}!\"\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          320,
+          -16
+        ],
+        "id": "cc042e2e-6aa3-4685-97ee-375b36bd63fc",
+        "name": "Respond to Webhook"
+      },
+      {
+        "parameters": {
+          "amount": 10
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          128,
+          -16
+        ],
+        "id": "3b3a4181-96fb-4aad-a587-9864b7963b78",
+        "name": "Wait",
+        "webhookId": "4e9e2ed6-4090-4051-bfa7-b3bc461baf19"
+      },
+      {
+        "parameters": {
+          "operation": "create",
+          "additionalFields": {},
+          "options": {}
+        },
+        "type": "n8n-nodes-base.elasticsearch",
+        "typeVersion": 1,
+        "position": [
+          128,
+          144
+        ],
+        "id": "ee9c2ceb-457a-424f-9b9e-2cf56e4a7667",
+        "name": "Create a document",
+        "disabled": true
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Wait",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Create a document",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Oleksandr Sirkov",
+    "name": "Version 10f0f6c1",
+    "description": "Deactivate unused node"
+  },
+  "activeVersionId": "10f0f6c1-0fd5-41ff-b92b-2ae461bba06a",
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-11-28T15:26:48.822Z",
+  "id": "FzwTntAZxEU9s2tZ",
+  "isArchived": false,
+  "meta": null,
+  "name": "Test webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ab11248a-02c8-4383-a487-39f66e808f28",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -80,
+        -16
+      ],
+      "id": "101ec4e6-5b9b-4f81-84fd-72b2c436b20b",
+      "name": "Webhook",
+      "webhookId": "ab11248a-02c8-4383-a487-39f66e808f28"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"greeting\": \"Hello, {{$json.body.name || \"stranger\"}}!\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        320,
+        -16
+      ],
+      "id": "cc042e2e-6aa3-4685-97ee-375b36bd63fc",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        128,
+        -16
+      ],
+      "id": "3b3a4181-96fb-4aad-a587-9864b7963b78",
+      "name": "Wait",
+      "webhookId": "4e9e2ed6-4090-4051-bfa7-b3bc461baf19"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "additionalFields": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.elasticsearch",
+      "typeVersion": 1,
+      "position": [
+        128,
+        144
+      ],
+      "id": "ee9c2ceb-457a-424f-9b9e-2cf56e4a7667",
+      "name": "Create a document",
+      "disabled": true
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "shared": [
+    {
+      "updatedAt": "2025-11-28T15:26:48.869Z",
+      "createdAt": "2025-11-28T15:26:48.869Z",
+      "role": "workflow:owner",
+      "workflowId": "FzwTntAZxEU9s2tZ",
+      "projectId": "C2qt4KANuTm5Qu1n"
+    }
+  ],
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-24T12:59:24.431Z",
+  "versionId": "10f0f6c1-0fd5-41ff-b92b-2ae461bba06a"
+}
