@@ -1,0 +1,2589 @@
+{
+  "active": true,
+  "activeVersion": {
+    "updatedAt": "2025-11-28T09:33:27.074Z",
+    "createdAt": "2025-11-28T09:33:27.074Z",
+    "versionId": "23b1e485-a7c8-4c1a-8dc9-0a96d1f3c9cc",
+    "workflowId": "FG3Z8XLpV4vpe4XN",
+    "nodes": [
+      {
+        "parameters": {
+          "endpointUrl": "https://betting-tips-mcp.ls-g.net/sse",
+          "serverTransport": "sse",
+          "include": "selected",
+          "includeTools": [
+            "search_team"
+          ],
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+        "typeVersion": 1.2,
+        "position": [
+          752,
+          992
+        ],
+        "id": "cebd1938-7437-41be-acda-2a3b803d5598",
+        "name": "search-team MCP Client"
+      },
+      {
+        "parameters": {
+          "model": "grok-4-fast-reasoning",
+          "options": {
+            "temperature": 0.3
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+        "typeVersion": 1,
+        "position": [
+          624,
+          992
+        ],
+        "id": "c1298820-1555-4631-9750-08b227f1873a",
+        "name": "xAI (grok 4 fast) 2",
+        "credentials": {
+          "xAiApi": {
+            "id": "Y59viheYvrzhJyG3",
+            "name": "DEV xAi Account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "model": "grok-4-fast-reasoning",
+          "options": {
+            "temperature": 0.3
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+        "typeVersion": 1,
+        "position": [
+          1312,
+          992
+        ],
+        "id": "8ca27f9a-0bf6-4f3b-9547-8841803bcc4a",
+        "name": "xAI (grok 4 fast) 3",
+        "credentials": {
+          "xAiApi": {
+            "id": "Y59viheYvrzhJyG3",
+            "name": "DEV xAi Account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "destinationFieldName": "bet_tips",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          1008,
+          1408
+        ],
+        "id": "5bd799a9-ca77-42f2-a379-ee269effd1c6",
+        "name": "Aggregate Bet Tips"
+      },
+      {
+        "parameters": {
+          "fieldToSplitOut": "output",
+          "include": "allOtherFields",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.splitOut",
+        "typeVersion": 1,
+        "position": [
+          400,
+          768
+        ],
+        "id": "ab5e628e-611b-48e8-a1ce-177782638ba3",
+        "name": "Split by Bet Tip"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "=Here is match data:\n{{ $json.output.toJsonString() }}\n\nExtract sport teams data for betting tip object\n\nWhen searching for teams use this default values for following parameters:\n- `countryCode`: GB\n- `locale`: en\n\n\nFollow this steps precisely:\n\n**STEP 1: Search for home team**\n\n- Search for home team id using `search_team` tool\n- Parse received response text as JSON\n- In received response teams are sorted by popularity for the country code\n- Select best match from the several top results matching by names\n- **FALLBACK**: If no matching team is found or match is ambiguous, DO NOT INCLUDE this betting tip in response, return {}\n- Remember found team id as home team id\n- Remember found team name as new home team name\n\n**STEP 2: Search for away team**\n\n- Search for away team id using `search_team` tool\n- Parse received response text as JSON\n- In received response teams are sorted by popularity for the country code\n- Select best match from the several top results matching by names\n- **FALLBACK**: If no matching team is found or match is ambiguous, DO NOT INCLUDE this betting tip in response, return {}\n- Remember found team id as away team id\n- Remember found team name as new away team name\n\n**STEP 4: Create new match name**\n- Using received home team name and away team name, create match name using pattern {home team name} vs {away team name}\n- Remember found team name as new match name\n\n**STEP 5: Generate response**\n\n- Return received team ids, team names and match name in provided structure\n",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "You are a football match data extraction assistant, you know about sport and  betting terms definitions and structures.",
+            "returnIntermediateSteps": false
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2.2,
+        "position": [
+          672,
+          768
+        ],
+        "id": "43dd1069-596d-4cde-8761-178d18773e49",
+        "name": "Load Teams",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "=Here is match data:\n{{ $json.output.toJsonString() }}\n\nExtract sport match data for betting tip object\n\nWhen searching for match use this default values for following parameters:\n- `sport`: soccer\n- `countryCode`: GB\n- `locale`: en\n- `timeZone` 0.0\n\n\nFollow this steps precisely:\n\n**STEP 1: Search for the match**\n\n- Search for the match using `list_matches` tool\n- **NOTE** If year in match start time is not provided - use year from {{ $now }}\n- **NOTE** If match start time is not provided - use {{ $now }} as match start time\n- **NOTE** Use match start time in YYYYMMDD format\n- **FALLBACK**: If no match is found or match teams is different, DO NOT INCLUDE this betting tip in response, return {}\n- Parse received response text as JSON\n- Remember received match id as new match id\n- Remebmer received lsb id as new lsb id\n\n\n**STEP 2: Find the match in the list**\n- From found matches find match with home team id and away team id\n- Use found match in the next steps\n\n\n**STEP 3: Get the match start time**\n- Parse match start time from response from YYYYMMDDhhmm format to timestamp\n- Remember parsed match start time as new match start time\n\n\n**STEP 4: Generate response**\n\n- Return received match id, lsb id and match start time in provided structure\n",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "You are a football match data extraction assistant, you know about sport and  betting terms definitions and structures.",
+            "returnIntermediateSteps": false
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2.2,
+        "position": [
+          1360,
+          768
+        ],
+        "id": "8523ea78-5e03-4a42-8fcd-0bb02218ad61",
+        "name": "Load Match",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "endpointUrl": "http://betting-tips-mcp:8000/sse",
+          "serverTransport": "sse",
+          "include": "selected",
+          "includeTools": [
+            "search_match",
+            "list_matches"
+          ],
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+        "typeVersion": 1.2,
+        "position": [
+          1520,
+          992
+        ],
+        "id": "dfe9297e-361c-4519-a1c8-6db46bcd9143",
+        "name": "search-match MCP Client"
+      },
+      {
+        "parameters": {
+          "jsonSchemaExample": "[\n  {\n    \"match_start_time\": \"2025-10-04\",\n    \"match_name\"      : \"Crystal Palace v Liverpool\",\n    \"home_team_name\"  : \"Crystal Palace\",\n    \"away_team_name\"  : \"Liverpool\",\n    \"market_type\"     : \"Full Time Result\",\n    \"selection\"       : \"Crystal Palace\"\n  },\n  {\n    \"match_start_time\": \"2025-10-04\",\n    \"match_name\"      : \"Arsenal v Southampton\",\n    \"home_team_name\"  : \"Arsenal\",\n    \"away_team_name\"  : \"Southampton\",\n    \"market_type\"     : \"Both Team To Score\",\n    \"selection\"       : \"Yes\"\n  },\n  {\n    \"match_start_time\": \"2025-10-04\",\n    \"match_name\"      : \"Leicester v Bournemouth\",\n    \"home_team_name\"  : \"Leicester\",\n    \"away_team_name\"  : \"Bournemouth\",\n    \"market_type\"     : \"Over Goals\",\n    \"selection\"       : \"1.5\"\n  }\n]"
+        },
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1.3,
+        "position": [
+          192,
+          992
+        ],
+        "id": "dbeb09c6-5b58-49ee-9cac-91a06d239775",
+        "name": "JSON Parser 1"
+      },
+      {
+        "parameters": {
+          "jsonSchemaExample": "{\n  \"teams\": [\n    {\"id\": \"home_team_id\", \"position\": \"HOME\", \"name\": \"Team1\"},\n    {\"id\": \"home_team_id\", \"position\": \"AWAY\", \"name\": \"Team2\"}\n  ],\n  \"match_start_time\": \n  \"Sat 18 Oct 12:30\",\n  \"match_name\": \n  \"Nottingham Forest vs Chelsea\",\n  \"market_type\": \n  \"Both Teams To Score (BTTS)\",\n  \"selection\": \n  \"Yes\"\n}"
+        },
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1.3,
+        "position": [
+          880,
+          992
+        ],
+        "id": "df39b7b2-b8a5-4272-a3c2-4f5b66a19858",
+        "name": "JSON Parser 2"
+      },
+      {
+        "parameters": {
+          "jsonSchemaExample": "{\n  \"id\": \"match_id\",\n  \"lsb_id\": \"lsb_id\",\n  \"match_start_time\": \"match_start_time\",\n  \"teams\": [\n    {\"id\": \"3060\", \"position\": \"home\", \"name\": \"Nottingham Forest\"},\n    {\"id\": \"2881\", \"position\": \"away\", \"name\": \"Chelsea\"          }\n  ],\n  \"match_name\": \"Nottingham Forest vs Chelsea\",\n  \"market_type\": \"Both Teams To Score (BTTS)\",\n  \"selection\": \"Yes\"\n}\n"
+        },
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1.3,
+        "position": [
+          1616,
+          992
+        ],
+        "id": "7eae682a-34e3-4b83-ba72-3f78c18430ed",
+        "name": "JSON Parser 3"
+      },
+      {
+        "parameters": {
+          "content": "## 1. Process message\n",
+          "height": 560,
+          "width": 928
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          0,
+          0
+        ],
+        "typeVersion": 1,
+        "id": "89347e9b-7313-4e72-87f4-21a164b23968",
+        "name": "Sticky Note"
+      },
+      {
+        "parameters": {
+          "content": "##  3. Fetch Sport data\n",
+          "height": 528,
+          "width": 2192
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -240,
+          656
+        ],
+        "typeVersion": 1,
+        "id": "4f9aea94-4a51-47ab-90c5-11be64307ccd",
+        "name": "Sticky Note1"
+      },
+      {
+        "parameters": {
+          "jsonSchemaExample": "{\n  \"id\": \"match_id\",\n  \"match_name\": \"Arsenal vs Manchester\",\n  \"lsb_id\": \"lsb_id\",\n  \"market_id\": \"SBTM_2_xxxx\",\n  \"market_type\": \"Both Teams To Score (BTTS)\",\n  \"selection_id\": \"SBTS_2_xxxx\",\n  \"selection\": \"Yes\",\n  \"odds\": \"1.12\"\n}"
+        },
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1.3,
+        "position": [
+          576,
+          1632
+        ],
+        "id": "d4a5da14-000f-4a7f-b84b-4987d1ac6967",
+        "name": "JSON Parser 4"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "=**TASK:**\nUsing the provided betting tip data, load corresponding **market** and **selection** IDs.\nInput data:\n\n```\n{{ $json.output.toJsonString() }}\n```\n\n---\n\n### 🔍 STEP 1 — Retrieve and match markets\n\n1. Call the `list_markets` tool for the given lsb id.\n2. Parse the response as JSON — it should contain all available markets and their selections.\n3. For each betting tip:\n\n   * Find the market whose **name** most closely matches the provided `market_type`.\n   * Within that market, find the selection whose **name** most closely matches the provided `selection`.\n4. If both are found:\n\n   * Save `market_id`, `selection_id`, and `odds`.\n5. **Fallback rules:**\n\n   * If if lsb id, market or selection is missing → set `market_id` and `selection_id` to `\"\"`.\n   * If market name match is missing or ambiguous → set `market_id` to `\"\"`.\n   * If selection name match is missing or ambiguous → set `selection_id` to `\"\"`.\n   * If tool returns no data → set all IDs and odds to `\"\"`.\n\n---\n\n### 🧾 STEP 2 — Build response\n\nFor each betting tip, return an object including the original data plus resolved fields\n\nIf no data found for all tips, return:\n\n```json\n{ \"error\": \"No markets or selections found.\" }\n```",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "You are a precise data-matching AI for betting systems.  \nAlways return structured JSON. \nDo not add commentary or text outside JSON.\n",
+            "returnIntermediateSteps": false
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2.2,
+        "position": [
+          384,
+          1408
+        ],
+        "id": "75479d21-b4d4-4516-9f22-975d180c956a",
+        "name": "Load Markets",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "endpointUrl": "https://betting-tips-mcp.ls-g.net/sse",
+          "serverTransport": "sse",
+          "include": "selected",
+          "includeTools": [
+            "list_markets"
+          ],
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+        "typeVersion": 1.2,
+        "position": [
+          448,
+          1632
+        ],
+        "id": "f25a4d7b-a6fd-4b0d-9148-540bd9b0f038",
+        "name": "list_markets MCP Client"
+      },
+      {
+        "parameters": {
+          "content": "## 4. Fetch Betting data\n",
+          "height": 528,
+          "width": 1328
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          256,
+          1296
+        ],
+        "typeVersion": 1,
+        "id": "dcdb14d6-6b46-4756-9073-6b2ebe163e81",
+        "name": "Sticky Note2"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "=**INPUT**\n1. **Text**: {{ $('Merge text and photo data').item.json.text }}\n\n**USER TASK (EXACTLY):**\n> ANALYZE THIS BETTING SLIP IMAGE AND EXTRACT ALL BETS\n\n**EXTRACTION RULES (FOLLOW IN ORDER):**\n\n1. **Find Every Match Block**\n   - Each block has:  \n     - Two team names (Home = top/left, Away = bottom/right)  \n     - Kick-off time (e.g., `Tue 28 Oct 19:45`)  \n     - Market + selection + odds (optional)\n\n2. **Home vs Away**\n   - **Home team** = First team listed (top or left)  \n   - **Away team** = Second team listed (bottom or right)  \n   - **Never guess** — use visual order only\n\n3. **Extract Start Time**\n   - Format: `Day DD Mon HH:MM` (e.g., `Tue 28 Oct 19:45`)  \n   - Always on the right side of the match block\n\n4. **Identify Market & Selection**\n   | Visible Text | → | Market | Selection |\n   |--------------|--->|--------|-----------|\n   | \"Full Time Result\" + team | → | `\"Full Time Result\"` | `\"TeamName\"` |\n   | \"Over 1\" + \"Total Goals\" | → | `\"Total Goals\"` | `\"Over 1\"` |\n   | \"Draw or Plymouth\" + \"Double Chance\" | → | `\"Double Chance\"` | `\"Draw or Plymouth\"` |\n   | \"Yes\" + \"Both Teams to Score\" | → | `\"Both Teams to Score\"` | `\"Yes\"` |\n\n5. **One JSON Entry Per Selection**\n   - Even if part of a Bet Builder → **split into separate objects**\n   - Repeat `home_team`, `away_team`, `start_time` for each\n\n6. **Team Name Rules**\n   - Use **exact spelling** from image  \n   - No abbreviations  \n   - Examples:  \n     - `AC Milan` (not Milan)  \n     - `Wrexham`  \n     - `Plymouth Argyle`\n\n\n**CRITICAL:**\n- **Step 0 is mandatory**: Load image from URL first  \n- **No missing bets**  \n- **No invented data**  \n- **Exact capitalization & spelling**  \n- **Zero extra text**  \n\n**RETURN FINAL JSON ONLY.**",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "You are a high-precision betting slip OCR & parser optimized for Grok 4. Your only job is to extract every visible betting selection from the image with zero errors. No analysis. No commentary.",
+            "returnIntermediateSteps": false,
+            "enableStreaming": false
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2.2,
+        "position": [
+          48,
+          768
+        ],
+        "id": "b8d2387d-011f-47f6-9c82-f0be35482df6",
+        "name": "Extract Bet Tips",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "639cccec-17f1-4055-a564-e359cfd3bb00",
+                "leftValue": "={{ $json.photos }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "array",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          288,
+          240
+        ],
+        "id": "d5fa37c9-8fa7-40f3-b080-927a84eb6195",
+        "name": "Photos in post"
+      },
+      {
+        "parameters": {
+          "fieldToSplitOut": "photos",
+          "include": "allOtherFields",
+          "options": {
+            "destinationFieldName": "photo"
+          }
+        },
+        "type": "n8n-nodes-base.splitOut",
+        "typeVersion": 1,
+        "position": [
+          512,
+          128
+        ],
+        "id": "35797f37-a3a0-4e90-ae7a-7e2e6586e1b5",
+        "name": "Split by photos"
+      },
+      {
+        "parameters": {
+          "model": "grok-3-mini",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+        "typeVersion": 1,
+        "position": [
+          1232,
+          1632
+        ],
+        "id": "ecbc32a2-aa66-4f57-87ca-45e019cbcb17",
+        "name": "xAI (grok 3 mini) ",
+        "credentials": {
+          "xAiApi": {
+            "id": "Y59viheYvrzhJyG3",
+            "name": "DEV xAi Account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "=Here is list of bet tips:\n{{ $json.bet_tips.toJsonString() }}\n\nNeed to create one link in format:\n\n\"https://www.livescorebet.com/uk/dl/addtobetslip?selectionIds={selection_id1},{selection_id2},...,{selection_idN}&betType=acca\"\n\nAnd add type in following style:\nSingle, Double, Treble, 4-fold, 5-fold, 6-fold, 7-fold, 8-fold, 9-fold, 10-fold, 11-fold, 12-fold, 13-fold, 14-fold, 15-fold, 16-fold, 17-fold, 18-fold, 19-fold, 20-fold\n",
+          "hasOutputParser": true,
+          "messages": {
+            "messageValues": [
+              {
+                "message": "=You are betting expert, you know about betting definitions"
+              }
+            ]
+          },
+          "batching": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.chainLlm",
+        "typeVersion": 1.7,
+        "position": [
+          1232,
+          1408
+        ],
+        "id": "74ee8410-993e-417e-b7a6-f44ec5eed1e1",
+        "name": "Convert to Acca Bet Slip",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsonSchemaExample": "{\n\t\"acca\": {\n      \"acca_url\": \"https://example.com\",\n      \"type\": \"6-fold\"\n    }\n}"
+        },
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1.3,
+        "position": [
+          1376,
+          1632
+        ],
+        "id": "a2e74b59-2bf0-458b-8186-f3412a817211",
+        "name": "Structured Output Parser"
+      },
+      {
+        "parameters": {
+          "jsonSchemaExample": "{\n  \"status\": \"success|error\",\n  \"success\": {\n\t\"isBettingDataValid\": true\n  },\n  \"error\": {\n    \"message\": \"\"\n  }\n}"
+        },
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1.3,
+        "position": [
+          1312,
+          320
+        ],
+        "id": "97eac8dc-2acb-46fe-b5d5-0446f3465b06",
+        "name": "JSON Parser "
+      },
+      {
+        "parameters": {
+          "model": "grok-4-fast-reasoning",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+        "typeVersion": 1,
+        "position": [
+          1168,
+          320
+        ],
+        "id": "7b173dca-9442-435f-aa3c-8d1cd9f946e2",
+        "name": "xAI (grok 4 fast) ",
+        "credentials": {
+          "xAiApi": {
+            "id": "Y59viheYvrzhJyG3",
+            "name": "DEV xAi Account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "=**INPUT**\n1. **Text**: {{ $json.text }}\n2. **Image URL**: {{ $json.photo.url }}\n\n\n**TASK**\n**Analyze the post text and image (via URL)** to determine if the post contains **at least one valid betting tip**.\n\n\n**VALIDATION RULES (FOLLOW IN ORDER):**\n\n0. **Load the Image**\n   - **Image is provided via URL** in the user message\n   - **Download and load the image from the URL** before any processing\n   - Use internal image loading capability — **do not skip this step**\n   - Confirm image is fully loaded and readable before proceeding\n\n### Definition of a **Valid Betting Tip**:\n\nA betting tip must include **all** of the following:\n1. **Clear match identifier**:\n   - Home team name **and** away team name (e.g., `Leeds - Arsenal`, `Al Nassr - Al Ittihad`).\n   - Optional: match start time and league (e.g., `20:45 GER`).\n   - **Unclear/abbreviated/ambiguous team names** → invalid.\n2. **Clear betting recommendation**:\n   - Market (e.g., `Over 1.5`, `X2`, `2`, `Under 4.5`) **and** selection.\n   - Odds may be present but are **not required**.\n   - Multiple tips per match allowed.\n\n> **Lists of matches and tips can be separate** (e.g., table format).\n\n\n**CRITICAL:**\n- **Step 0 is mandatory**: Load image from URL first  \n- **No invented data**  \n- **Exact capitalization & spelling**  \n- **Zero extra text**  \n\n**RETURN FINAL JSON ONLY.**",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "=You are an expert in analyzing X (Twitter) posts for **sports betting tips**. You understand sports events, team names, leagues, and betting markets (e.g., Over 1.5, 1X, X2, Under 4.5, etc.).\n",
+            "returnIntermediateSteps": false
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2.2,
+        "position": [
+          1168,
+          96
+        ],
+        "id": "b63be33b-f5ad-4b47-a5ec-9253b9611092",
+        "name": "Post Pre-Filter",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "content": "## 2. Validate X Post data\n",
+          "height": 560,
+          "width": 704
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1024,
+          0
+        ],
+        "typeVersion": 1,
+        "id": "80221981-e224-4d85-ac11-80f9ee81f6c4",
+        "name": "Sticky Note4"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "1660259f-709e-425b-bba5-2009ae0b2bd2",
+                "leftValue": "={{ $json.output.id }}",
+                "rightValue": "success",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              },
+              {
+                "id": "a1d1df47-4582-4b96-92eb-513287da3948",
+                "leftValue": "={{ $json.output.lsb_id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.filter",
+        "typeVersion": 2.2,
+        "position": [
+          1776,
+          960
+        ],
+        "id": "192a505e-5f07-404a-937f-5b119bab03e4",
+        "name": "Filter out not found matches"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "d1f8f30b-5d81-4150-8e74-de37546335ae",
+                "leftValue": "={{ $json.output.selection_id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.filter",
+        "typeVersion": 2.2,
+        "position": [
+          784,
+          1408
+        ],
+        "id": "537dfd82-249b-47ac-85cf-770ff1f89440",
+        "name": "Filter out not found markets"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "1660259f-709e-425b-bba5-2009ae0b2bd2",
+                "leftValue": "={{ $json.output.status }}",
+                "rightValue": "success",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              },
+              {
+                "id": "d4a598d7-748d-4d11-9f9d-674de1e108b7",
+                "leftValue": "={{ $json.output.success.isBettingDataValid }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.filter",
+        "typeVersion": 2.2,
+        "position": [
+          1536,
+          336
+        ],
+        "id": "98e2367c-ad86-497b-a9a8-9fbc9b63e094",
+        "name": "Filter out invalid bet tips"
+      },
+      {
+        "parameters": {
+          "dataTableId": {
+            "__rl": true,
+            "value": "QhvGUDekKrryDaJd",
+            "mode": "list",
+            "cachedResultName": "Betting Tips via X",
+            "cachedResultUrl": "/projects/C2qt4KANuTm5Qu1n/datatables/QhvGUDekKrryDaJd"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "acca_url": "={{ $json.output.acca.acca_url }}",
+              "type": "={{ $json.output.acca.type }}",
+              "tweet_url": "=-"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "tweet_url",
+                "displayName": "tweet_url",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "acca_url",
+                "displayName": "acca_url",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "type",
+                "displayName": "type",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.dataTable",
+        "typeVersion": 1,
+        "position": [
+          1696,
+          1632
+        ],
+        "id": "fda9dd65-675f-4627-9849-0da28b9826b7",
+        "name": "Insert row to data table"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "1660259f-709e-425b-bba5-2009ae0b2bd2",
+                "leftValue": "={{ $json.output.teams }}",
+                "rightValue": 2,
+                "operator": {
+                  "type": "array",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.filter",
+        "typeVersion": 2.2,
+        "position": [
+          1088,
+          960
+        ],
+        "id": "294e6a3f-4f0a-4501-91e5-92f019731cd9",
+        "name": "Filter out not found teams"
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineByPosition",
+          "options": {
+            "includeUnpaired": true
+          }
+        },
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          736,
+          240
+        ],
+        "id": "b717984f-7b01-4e7f-ab98-578b6a889f56",
+        "name": "Merge text and photo data"
+      },
+      {
+        "parameters": {
+          "url": "={{ $('Merge text and photo data').item.json.photo.url }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -144,
+          768
+        ],
+        "id": "7002831d-281a-4c3d-89a2-02c9d3a37256",
+        "name": "Fetch image"
+      },
+      {
+        "parameters": {
+          "sessionIdType": "customKey",
+          "sessionKey": "={{ $json.output.match_name }}-{{ $json.output.match_start_time }}",
+          "contextWindowLength": 16
+        },
+        "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+        "typeVersion": 1.3,
+        "position": [
+          1408,
+          992
+        ],
+        "id": "9926dbf8-70af-4c6e-8882-1f932259ca18",
+        "name": "Simple Memory"
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "2374a3f2-738c-48f9-b585-bfec0cd9a487",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          -240,
+          112
+        ],
+        "id": "405c1ff8-950d-4b36-af01-ed0db7cf1b80",
+        "name": "Trigger Webhook",
+        "webhookId": "2374a3f2-738c-48f9-b585-bfec0cd9a487"
+      },
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -240,
+          352
+        ],
+        "id": "8ac72b59-b6d7-4ea3-a6cc-35697cc36be0",
+        "name": "When Executed by Another Workflow"
+      },
+      {
+        "parameters": {
+          "mode": "raw",
+          "jsonOutput": "={{ $json.body }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          80,
+          112
+        ],
+        "id": "4badeaba-a748-433b-b858-010958d876ca",
+        "name": "Parse webhook message"
+      },
+      {
+        "parameters": {
+          "model": "grok-4-fast-reasoning",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+        "typeVersion": 1,
+        "position": [
+          320,
+          1632
+        ],
+        "id": "ffc48271-2175-47ce-9c52-4873baba1f31",
+        "name": "xAI (grok 4 fast)",
+        "credentials": {
+          "xAiApi": {
+            "id": "Y59viheYvrzhJyG3",
+            "name": "DEV xAi Account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "model": "grok-4-1-fast-reasoning",
+          "options": {
+            "temperature": 0.1,
+            "timeout": 360000
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+        "typeVersion": 1,
+        "position": [
+          48,
+          992
+        ],
+        "id": "cd254829-f817-4348-b6ce-049e4d5186ea",
+        "name": "xAI (grok 4.1 fast) 4",
+        "credentials": {
+          "xAiApi": {
+            "id": "Y59viheYvrzhJyG3",
+            "name": "DEV xAi Account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "mode": "raw",
+          "jsonOutput": "={{ $json }} ",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          80,
+          352
+        ],
+        "id": "202bcc0e-d81d-4338-8bdd-68aa5e9b2c38",
+        "name": "Parse call message"
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.stopAndError",
+        "typeVersion": 1,
+        "position": [
+          1696,
+          1440
+        ],
+        "id": "97634729-95f9-4a4d-9629-43308c7ca7f4",
+        "name": "Stop and Error",
+        "disabled": true
+      }
+    ],
+    "connections": {
+      "search-team MCP Client": {
+        "ai_tool": [
+          [
+            {
+              "node": "Load Teams",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "xAI (grok 4 fast) 2": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Load Teams",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "xAI (grok 4 fast) 3": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Load Match",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Bet Tips": {
+        "main": [
+          [
+            {
+              "node": "Convert to Acca Bet Slip",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split by Bet Tip": {
+        "main": [
+          [
+            {
+              "node": "Load Teams",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Load Teams": {
+        "main": [
+          [
+            {
+              "node": "Filter out not found teams",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Load Match": {
+        "main": [
+          [
+            {
+              "node": "Filter out not found matches",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "search-match MCP Client": {
+        "ai_tool": [
+          [
+            {
+              "node": "Load Match",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "JSON Parser 1": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Extract Bet Tips",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "JSON Parser 2": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Load Teams",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "JSON Parser 3": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Load Match",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "JSON Parser 4": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Load Markets",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Load Markets": {
+        "main": [
+          [
+            {
+              "node": "Filter out not found markets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "list_markets MCP Client": {
+        "ai_tool": [
+          [
+            {
+              "node": "Load Markets",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Bet Tips": {
+        "main": [
+          [
+            {
+              "node": "Split by Bet Tip",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Photos in post": {
+        "main": [
+          [
+            {
+              "node": "Split by photos",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Merge text and photo data",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Split by photos": {
+        "main": [
+          [
+            {
+              "node": "Merge text and photo data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "xAI (grok 3 mini) ": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Convert to Acca Bet Slip",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Structured Output Parser": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Convert to Acca Bet Slip",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "JSON Parser ": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Post Pre-Filter",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "xAI (grok 4 fast) ": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Post Pre-Filter",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Post Pre-Filter": {
+        "main": [
+          [
+            {
+              "node": "Filter out invalid bet tips",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Filter out not found matches": {
+        "main": [
+          [
+            {
+              "node": "Load Markets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Filter out not found markets": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Bet Tips",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Filter out invalid bet tips": {
+        "main": [
+          [
+            {
+              "node": "Fetch image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Convert to Acca Bet Slip": {
+        "main": [
+          [
+            {
+              "node": "Insert row to data table",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Filter out not found teams": {
+        "main": [
+          [
+            {
+              "node": "Load Match",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge text and photo data": {
+        "main": [
+          [
+            {
+              "node": "Post Pre-Filter",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch image": {
+        "main": [
+          [
+            {
+              "node": "Extract Bet Tips",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Insert row to data table": {
+        "main": [
+          []
+        ]
+      },
+      "Simple Memory": {
+        "ai_memory": [
+          [
+            {
+              "node": "Load Match",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Trigger Webhook": {
+        "main": [
+          [
+            {
+              "node": "Parse webhook message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When Executed by Another Workflow": {
+        "main": [
+          [
+            {
+              "node": "Parse call message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse webhook message": {
+        "main": [
+          [
+            {
+              "node": "Photos in post",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "xAI (grok 4 fast)": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Load Markets",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "xAI (grok 4.1 fast) 4": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Extract Bet Tips",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse call message": {
+        "main": [
+          [
+            {
+              "node": "Photos in post",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Oleksandr Sirkov",
+    "name": null,
+    "description": null
+  },
+  "activeVersionId": "23b1e485-a7c8-4c1a-8dc9-0a96d1f3c9cc",
+  "connections": {
+    "search-team MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "Load Teams",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI (grok 4 fast) 2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Load Teams",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI (grok 4 fast) 3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Load Match",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Bet Tips": {
+      "main": [
+        [
+          {
+            "node": "Convert to Acca Bet Slip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split by Bet Tip": {
+      "main": [
+        [
+          {
+            "node": "Load Teams",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Teams": {
+      "main": [
+        [
+          {
+            "node": "Filter out not found teams",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Match": {
+      "main": [
+        [
+          {
+            "node": "Filter out not found matches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search-match MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "Load Match",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON Parser 1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Extract Bet Tips",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON Parser 2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Load Teams",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON Parser 3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Load Match",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON Parser 4": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Load Markets",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Markets": {
+      "main": [
+        [
+          {
+            "node": "Filter out not found markets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "list_markets MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "Load Markets",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Bet Tips": {
+      "main": [
+        [
+          {
+            "node": "Split by Bet Tip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Photos in post": {
+      "main": [
+        [
+          {
+            "node": "Split by photos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge text and photo data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Split by photos": {
+      "main": [
+        [
+          {
+            "node": "Merge text and photo data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI (grok 3 mini) ": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Convert to Acca Bet Slip",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Convert to Acca Bet Slip",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON Parser ": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Post Pre-Filter",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI (grok 4 fast) ": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Post Pre-Filter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Pre-Filter": {
+      "main": [
+        [
+          {
+            "node": "Filter out invalid bet tips",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter out not found matches": {
+      "main": [
+        [
+          {
+            "node": "Load Markets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter out not found markets": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Bet Tips",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter out invalid bet tips": {
+      "main": [
+        [
+          {
+            "node": "Fetch image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Acca Bet Slip": {
+      "main": [
+        [
+          {
+            "node": "Insert row to data table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter out not found teams": {
+      "main": [
+        [
+          {
+            "node": "Load Match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge text and photo data": {
+      "main": [
+        [
+          {
+            "node": "Post Pre-Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch image": {
+      "main": [
+        [
+          {
+            "node": "Extract Bet Tips",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row to data table": {
+      "main": [
+        []
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Load Match",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse webhook message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Parse call message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse webhook message": {
+      "main": [
+        [
+          {
+            "node": "Photos in post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI (grok 4 fast)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Load Markets",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI (grok 4.1 fast) 4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract Bet Tips",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse call message": {
+      "main": [
+        [
+          {
+            "node": "Photos in post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-11-28T09:28:30.636Z",
+  "id": "FG3Z8XLpV4vpe4XN",
+  "isArchived": true,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "Betting Tips via X (v3)",
+  "nodes": [
+    {
+      "parameters": {
+        "endpointUrl": "https://betting-tips-mcp.ls-g.net/sse",
+        "serverTransport": "sse",
+        "include": "selected",
+        "includeTools": [
+          "search_team"
+        ],
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.2,
+      "position": [
+        752,
+        992
+      ],
+      "id": "cebd1938-7437-41be-acda-2a3b803d5598",
+      "name": "search-team MCP Client"
+    },
+    {
+      "parameters": {
+        "model": "grok-4-fast-reasoning",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        624,
+        992
+      ],
+      "id": "c1298820-1555-4631-9750-08b227f1873a",
+      "name": "xAI (grok 4 fast) 2",
+      "credentials": {
+        "xAiApi": {
+          "id": "Y59viheYvrzhJyG3",
+          "name": "DEV xAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "grok-4-fast-reasoning",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        992
+      ],
+      "id": "8ca27f9a-0bf6-4f3b-9547-8841803bcc4a",
+      "name": "xAI (grok 4 fast) 3",
+      "credentials": {
+        "xAiApi": {
+          "id": "Y59viheYvrzhJyG3",
+          "name": "DEV xAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "bet_tips",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1008,
+        1408
+      ],
+      "id": "5bd799a9-ca77-42f2-a379-ee269effd1c6",
+      "name": "Aggregate Bet Tips"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        400,
+        768
+      ],
+      "id": "ab5e628e-611b-48e8-a1ce-177782638ba3",
+      "name": "Split by Bet Tip"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is match data:\n{{ $json.output.toJsonString() }}\n\nExtract sport teams data for betting tip object\n\nWhen searching for teams use this default values for following parameters:\n- `countryCode`: GB\n- `locale`: en\n\n\nFollow this steps precisely:\n\n**STEP 1: Search for home team**\n\n- Search for home team id using `search_team` tool\n- Parse received response text as JSON\n- In received response teams are sorted by popularity for the country code\n- Select best match from the several top results matching by names\n- **FALLBACK**: If no matching team is found or match is ambiguous, DO NOT INCLUDE this betting tip in response, return {}\n- Remember found team id as home team id\n- Remember found team name as new home team name\n\n**STEP 2: Search for away team**\n\n- Search for away team id using `search_team` tool\n- Parse received response text as JSON\n- In received response teams are sorted by popularity for the country code\n- Select best match from the several top results matching by names\n- **FALLBACK**: If no matching team is found or match is ambiguous, DO NOT INCLUDE this betting tip in response, return {}\n- Remember found team id as away team id\n- Remember found team name as new away team name\n\n**STEP 4: Create new match name**\n- Using received home team name and away team name, create match name using pattern {home team name} vs {away team name}\n- Remember found team name as new match name\n\n**STEP 5: Generate response**\n\n- Return received team ids, team names and match name in provided structure\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a football match data extraction assistant, you know about sport and  betting terms definitions and structures.",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        768
+      ],
+      "id": "43dd1069-596d-4cde-8761-178d18773e49",
+      "name": "Load Teams",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is match data:\n{{ $json.output.toJsonString() }}\n\nExtract sport match data for betting tip object\n\nWhen searching for match use this default values for following parameters:\n- `sport`: soccer\n- `countryCode`: GB\n- `locale`: en\n- `timeZone` 0.0\n\n\nFollow this steps precisely:\n\n**STEP 1: Search for the match**\n\n- Search for the match using `list_matches` tool\n- **NOTE** If year in match start time is not provided - use year from {{ $now }}\n- **NOTE** If match start time is not provided - use {{ $now }} as match start time\n- **NOTE** Use match start time in YYYYMMDD format\n- **FALLBACK**: If no match is found or match teams is different, DO NOT INCLUDE this betting tip in response, return {}\n- Parse received response text as JSON\n- Remember received match id as new match id\n- Remebmer received lsb id as new lsb id\n\n\n**STEP 2: Find the match in the list**\n- From found matches find match with home team id and away team id\n- Use found match in the next steps\n\n\n**STEP 3: Get the match start time**\n- Parse match start time from response from YYYYMMDDhhmm format to timestamp\n- Remember parsed match start time as new match start time\n\n\n**STEP 4: Generate response**\n\n- Return received match id, lsb id and match start time in provided structure\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a football match data extraction assistant, you know about sport and  betting terms definitions and structures.",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1360,
+        768
+      ],
+      "id": "8523ea78-5e03-4a42-8fcd-0bb02218ad61",
+      "name": "Load Match",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "endpointUrl": "http://betting-tips-mcp:8000/sse",
+        "serverTransport": "sse",
+        "include": "selected",
+        "includeTools": [
+          "search_match",
+          "list_matches"
+        ],
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.2,
+      "position": [
+        1520,
+        992
+      ],
+      "id": "dfe9297e-361c-4519-a1c8-6db46bcd9143",
+      "name": "search-match MCP Client"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "[\n  {\n    \"match_start_time\": \"2025-10-04\",\n    \"match_name\"      : \"Crystal Palace v Liverpool\",\n    \"home_team_name\"  : \"Crystal Palace\",\n    \"away_team_name\"  : \"Liverpool\",\n    \"market_type\"     : \"Full Time Result\",\n    \"selection\"       : \"Crystal Palace\"\n  },\n  {\n    \"match_start_time\": \"2025-10-04\",\n    \"match_name\"      : \"Arsenal v Southampton\",\n    \"home_team_name\"  : \"Arsenal\",\n    \"away_team_name\"  : \"Southampton\",\n    \"market_type\"     : \"Both Team To Score\",\n    \"selection\"       : \"Yes\"\n  },\n  {\n    \"match_start_time\": \"2025-10-04\",\n    \"match_name\"      : \"Leicester v Bournemouth\",\n    \"home_team_name\"  : \"Leicester\",\n    \"away_team_name\"  : \"Bournemouth\",\n    \"market_type\"     : \"Over Goals\",\n    \"selection\"       : \"1.5\"\n  }\n]"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        192,
+        992
+      ],
+      "id": "dbeb09c6-5b58-49ee-9cac-91a06d239775",
+      "name": "JSON Parser 1"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"teams\": [\n    {\"id\": \"home_team_id\", \"position\": \"HOME\", \"name\": \"Team1\"},\n    {\"id\": \"home_team_id\", \"position\": \"AWAY\", \"name\": \"Team2\"}\n  ],\n  \"match_start_time\": \n  \"Sat 18 Oct 12:30\",\n  \"match_name\": \n  \"Nottingham Forest vs Chelsea\",\n  \"market_type\": \n  \"Both Teams To Score (BTTS)\",\n  \"selection\": \n  \"Yes\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        880,
+        992
+      ],
+      "id": "df39b7b2-b8a5-4272-a3c2-4f5b66a19858",
+      "name": "JSON Parser 2"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"id\": \"match_id\",\n  \"lsb_id\": \"lsb_id\",\n  \"match_start_time\": \"match_start_time\",\n  \"teams\": [\n    {\"id\": \"3060\", \"position\": \"home\", \"name\": \"Nottingham Forest\"},\n    {\"id\": \"2881\", \"position\": \"away\", \"name\": \"Chelsea\"          }\n  ],\n  \"match_name\": \"Nottingham Forest vs Chelsea\",\n  \"market_type\": \"Both Teams To Score (BTTS)\",\n  \"selection\": \"Yes\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1616,
+        992
+      ],
+      "id": "7eae682a-34e3-4b83-ba72-3f78c18430ed",
+      "name": "JSON Parser 3"
+    },
+    {
+      "parameters": {
+        "content": "## 1. Process message\n",
+        "height": 560,
+        "width": 928
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "89347e9b-7313-4e72-87f4-21a164b23968",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "##  3. Fetch Sport data\n",
+        "height": 528,
+        "width": 2192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -240,
+        656
+      ],
+      "typeVersion": 1,
+      "id": "4f9aea94-4a51-47ab-90c5-11be64307ccd",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"id\": \"match_id\",\n  \"match_name\": \"Arsenal vs Manchester\",\n  \"lsb_id\": \"lsb_id\",\n  \"market_id\": \"SBTM_2_xxxx\",\n  \"market_type\": \"Both Teams To Score (BTTS)\",\n  \"selection_id\": \"SBTS_2_xxxx\",\n  \"selection\": \"Yes\",\n  \"odds\": \"1.12\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        1632
+      ],
+      "id": "d4a5da14-000f-4a7f-b84b-4987d1ac6967",
+      "name": "JSON Parser 4"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=**TASK:**\nUsing the provided betting tip data, load corresponding **market** and **selection** IDs.\nInput data:\n\n```\n{{ $json.output.toJsonString() }}\n```\n\n---\n\n### 🔍 STEP 1 — Retrieve and match markets\n\n1. Call the `list_markets` tool for the given lsb id.\n2. Parse the response as JSON — it should contain all available markets and their selections.\n3. For each betting tip:\n\n   * Find the market whose **name** most closely matches the provided `market_type`.\n   * Within that market, find the selection whose **name** most closely matches the provided `selection`.\n4. If both are found:\n\n   * Save `market_id`, `selection_id`, and `odds`.\n5. **Fallback rules:**\n\n   * If if lsb id, market or selection is missing → set `market_id` and `selection_id` to `\"\"`.\n   * If market name match is missing or ambiguous → set `market_id` to `\"\"`.\n   * If selection name match is missing or ambiguous → set `selection_id` to `\"\"`.\n   * If tool returns no data → set all IDs and odds to `\"\"`.\n\n---\n\n### 🧾 STEP 2 — Build response\n\nFor each betting tip, return an object including the original data plus resolved fields\n\nIf no data found for all tips, return:\n\n```json\n{ \"error\": \"No markets or selections found.\" }\n```",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a precise data-matching AI for betting systems.  \nAlways return structured JSON. \nDo not add commentary or text outside JSON.\n",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        384,
+        1408
+      ],
+      "id": "75479d21-b4d4-4516-9f22-975d180c956a",
+      "name": "Load Markets",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://betting-tips-mcp.ls-g.net/sse",
+        "serverTransport": "sse",
+        "include": "selected",
+        "includeTools": [
+          "list_markets"
+        ],
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        1632
+      ],
+      "id": "f25a4d7b-a6fd-4b0d-9148-540bd9b0f038",
+      "name": "list_markets MCP Client"
+    },
+    {
+      "parameters": {
+        "content": "## 4. Fetch Betting data\n",
+        "height": 528,
+        "width": 1328
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        256,
+        1296
+      ],
+      "typeVersion": 1,
+      "id": "dcdb14d6-6b46-4756-9073-6b2ebe163e81",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=**INPUT**\n1. **Text**: {{ $('Merge text and photo data').item.json.text }}\n\n**USER TASK (EXACTLY):**\n> ANALYZE THIS BETTING SLIP IMAGE AND EXTRACT ALL BETS\n\n**EXTRACTION RULES (FOLLOW IN ORDER):**\n\n1. **Find Every Match Block**\n   - Each block has:  \n     - Two team names (Home = top/left, Away = bottom/right)  \n     - Kick-off time (e.g., `Tue 28 Oct 19:45`)  \n     - Market + selection + odds (optional)\n\n2. **Home vs Away**\n   - **Home team** = First team listed (top or left)  \n   - **Away team** = Second team listed (bottom or right)  \n   - **Never guess** — use visual order only\n\n3. **Extract Start Time**\n   - Format: `Day DD Mon HH:MM` (e.g., `Tue 28 Oct 19:45`)  \n   - Always on the right side of the match block\n\n4. **Identify Market & Selection**\n   | Visible Text | → | Market | Selection |\n   |--------------|--->|--------|-----------|\n   | \"Full Time Result\" + team | → | `\"Full Time Result\"` | `\"TeamName\"` |\n   | \"Over 1\" + \"Total Goals\" | → | `\"Total Goals\"` | `\"Over 1\"` |\n   | \"Draw or Plymouth\" + \"Double Chance\" | → | `\"Double Chance\"` | `\"Draw or Plymouth\"` |\n   | \"Yes\" + \"Both Teams to Score\" | → | `\"Both Teams to Score\"` | `\"Yes\"` |\n\n5. **One JSON Entry Per Selection**\n   - Even if part of a Bet Builder → **split into separate objects**\n   - Repeat `home_team`, `away_team`, `start_time` for each\n\n6. **Team Name Rules**\n   - Use **exact spelling** from image  \n   - No abbreviations  \n   - Examples:  \n     - `AC Milan` (not Milan)  \n     - `Wrexham`  \n     - `Plymouth Argyle`\n\n\n**CRITICAL:**\n- **Step 0 is mandatory**: Load image from URL first  \n- **No missing bets**  \n- **No invented data**  \n- **Exact capitalization & spelling**  \n- **Zero extra text**  \n\n**RETURN FINAL JSON ONLY.**",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a high-precision betting slip OCR & parser optimized for Grok 4. Your only job is to extract every visible betting selection from the image with zero errors. No analysis. No commentary.",
+          "returnIntermediateSteps": false,
+          "enableStreaming": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        48,
+        768
+      ],
+      "id": "b8d2387d-011f-47f6-9c82-f0be35482df6",
+      "name": "Extract Bet Tips",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "639cccec-17f1-4055-a564-e359cfd3bb00",
+              "leftValue": "={{ $json.photos }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        240
+      ],
+      "id": "d5fa37c9-8fa7-40f3-b080-927a84eb6195",
+      "name": "Photos in post"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "photos",
+        "include": "allOtherFields",
+        "options": {
+          "destinationFieldName": "photo"
+        }
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        512,
+        128
+      ],
+      "id": "35797f37-a3a0-4e90-ae7a-7e2e6586e1b5",
+      "name": "Split by photos"
+    },
+    {
+      "parameters": {
+        "model": "grok-3-mini",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        1632
+      ],
+      "id": "ecbc32a2-aa66-4f57-87ca-45e019cbcb17",
+      "name": "xAI (grok 3 mini) ",
+      "credentials": {
+        "xAiApi": {
+          "id": "Y59viheYvrzhJyG3",
+          "name": "DEV xAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is list of bet tips:\n{{ $json.bet_tips.toJsonString() }}\n\nNeed to create one link in format:\n\n\"https://www.livescorebet.com/uk/dl/addtobetslip?selectionIds={selection_id1},{selection_id2},...,{selection_idN}&betType=acca\"\n\nAnd add type in following style:\nSingle, Double, Treble, 4-fold, 5-fold, 6-fold, 7-fold, 8-fold, 9-fold, 10-fold, 11-fold, 12-fold, 13-fold, 14-fold, 15-fold, 16-fold, 17-fold, 18-fold, 19-fold, 20-fold\n",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are betting expert, you know about betting definitions"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1232,
+        1408
+      ],
+      "id": "74ee8410-993e-417e-b7a6-f44ec5eed1e1",
+      "name": "Convert to Acca Bet Slip",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"acca\": {\n      \"acca_url\": \"https://example.com\",\n      \"type\": \"6-fold\"\n    }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1376,
+        1632
+      ],
+      "id": "a2e74b59-2bf0-458b-8186-f3412a817211",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"status\": \"success|error\",\n  \"success\": {\n\t\"isBettingDataValid\": true\n  },\n  \"error\": {\n    \"message\": \"\"\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1312,
+        320
+      ],
+      "id": "97eac8dc-2acb-46fe-b5d5-0446f3465b06",
+      "name": "JSON Parser "
+    },
+    {
+      "parameters": {
+        "model": "grok-4-fast-reasoning",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        320
+      ],
+      "id": "7b173dca-9442-435f-aa3c-8d1cd9f946e2",
+      "name": "xAI (grok 4 fast) ",
+      "credentials": {
+        "xAiApi": {
+          "id": "Y59viheYvrzhJyG3",
+          "name": "DEV xAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=**INPUT**\n1. **Text**: {{ $json.text }}\n2. **Image URL**: {{ $json.photo.url }}\n\n\n**TASK**\n**Analyze the post text and image (via URL)** to determine if the post contains **at least one valid betting tip**.\n\n\n**VALIDATION RULES (FOLLOW IN ORDER):**\n\n0. **Load the Image**\n   - **Image is provided via URL** in the user message\n   - **Download and load the image from the URL** before any processing\n   - Use internal image loading capability — **do not skip this step**\n   - Confirm image is fully loaded and readable before proceeding\n\n### Definition of a **Valid Betting Tip**:\n\nA betting tip must include **all** of the following:\n1. **Clear match identifier**:\n   - Home team name **and** away team name (e.g., `Leeds - Arsenal`, `Al Nassr - Al Ittihad`).\n   - Optional: match start time and league (e.g., `20:45 GER`).\n   - **Unclear/abbreviated/ambiguous team names** → invalid.\n2. **Clear betting recommendation**:\n   - Market (e.g., `Over 1.5`, `X2`, `2`, `Under 4.5`) **and** selection.\n   - Odds may be present but are **not required**.\n   - Multiple tips per match allowed.\n\n> **Lists of matches and tips can be separate** (e.g., table format).\n\n\n**CRITICAL:**\n- **Step 0 is mandatory**: Load image from URL first  \n- **No invented data**  \n- **Exact capitalization & spelling**  \n- **Zero extra text**  \n\n**RETURN FINAL JSON ONLY.**",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an expert in analyzing X (Twitter) posts for **sports betting tips**. You understand sports events, team names, leagues, and betting markets (e.g., Over 1.5, 1X, X2, Under 4.5, etc.).\n",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1168,
+        96
+      ],
+      "id": "b63be33b-f5ad-4b47-a5ec-9253b9611092",
+      "name": "Post Pre-Filter",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "## 2. Validate X Post data\n",
+        "height": 560,
+        "width": 704
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1024,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "80221981-e224-4d85-ac11-80f9ee81f6c4",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1660259f-709e-425b-bba5-2009ae0b2bd2",
+              "leftValue": "={{ $json.output.id }}",
+              "rightValue": "success",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "a1d1df47-4582-4b96-92eb-513287da3948",
+              "leftValue": "={{ $json.output.lsb_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1776,
+        960
+      ],
+      "id": "192a505e-5f07-404a-937f-5b119bab03e4",
+      "name": "Filter out not found matches"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d1f8f30b-5d81-4150-8e74-de37546335ae",
+              "leftValue": "={{ $json.output.selection_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        784,
+        1408
+      ],
+      "id": "537dfd82-249b-47ac-85cf-770ff1f89440",
+      "name": "Filter out not found markets"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1660259f-709e-425b-bba5-2009ae0b2bd2",
+              "leftValue": "={{ $json.output.status }}",
+              "rightValue": "success",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "d4a598d7-748d-4d11-9f9d-674de1e108b7",
+              "leftValue": "={{ $json.output.success.isBettingDataValid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1536,
+        336
+      ],
+      "id": "98e2367c-ad86-497b-a9a8-9fbc9b63e094",
+      "name": "Filter out invalid bet tips"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "QhvGUDekKrryDaJd",
+          "mode": "list",
+          "cachedResultName": "Betting Tips via X",
+          "cachedResultUrl": "/projects/C2qt4KANuTm5Qu1n/datatables/QhvGUDekKrryDaJd"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "acca_url": "={{ $json.output.acca.acca_url }}",
+            "type": "={{ $json.output.acca.type }}",
+            "tweet_url": "=-"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "tweet_url",
+              "displayName": "tweet_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "acca_url",
+              "displayName": "acca_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        1632
+      ],
+      "id": "fda9dd65-675f-4627-9849-0da28b9826b7",
+      "name": "Insert row to data table"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1660259f-709e-425b-bba5-2009ae0b2bd2",
+              "leftValue": "={{ $json.output.teams }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1088,
+        960
+      ],
+      "id": "294e6a3f-4f0a-4501-91e5-92f019731cd9",
+      "name": "Filter out not found teams"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {
+          "includeUnpaired": true
+        }
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        736,
+        240
+      ],
+      "id": "b717984f-7b01-4e7f-ab98-578b6a889f56",
+      "name": "Merge text and photo data"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Merge text and photo data').item.json.photo.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -144,
+        768
+      ],
+      "id": "7002831d-281a-4c3d-89a2-02c9d3a37256",
+      "name": "Fetch image"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.output.match_name }}-{{ $json.output.match_start_time }}",
+        "contextWindowLength": 16
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1408,
+        992
+      ],
+      "id": "9926dbf8-70af-4c6e-8882-1f932259ca18",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "2374a3f2-738c-48f9-b585-bfec0cd9a487",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        112
+      ],
+      "id": "405c1ff8-950d-4b36-af01-ed0db7cf1b80",
+      "name": "Trigger Webhook",
+      "webhookId": "2374a3f2-738c-48f9-b585-bfec0cd9a487"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        352
+      ],
+      "id": "8ac72b59-b6d7-4ea3-a6cc-35697cc36be0",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        80,
+        112
+      ],
+      "id": "4badeaba-a748-433b-b858-010958d876ca",
+      "name": "Parse webhook message"
+    },
+    {
+      "parameters": {
+        "model": "grok-4-fast-reasoning",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        320,
+        1632
+      ],
+      "id": "ffc48271-2175-47ce-9c52-4873baba1f31",
+      "name": "xAI (grok 4 fast)",
+      "credentials": {
+        "xAiApi": {
+          "id": "Y59viheYvrzhJyG3",
+          "name": "DEV xAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "grok-4-1-fast-reasoning",
+        "options": {
+          "temperature": 0.1,
+          "timeout": 360000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        48,
+        992
+      ],
+      "id": "cd254829-f817-4348-b6ce-049e4d5186ea",
+      "name": "xAI (grok 4.1 fast) 4",
+      "credentials": {
+        "xAiApi": {
+          "id": "Y59viheYvrzhJyG3",
+          "name": "DEV xAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ $json }} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        80,
+        352
+      ],
+      "id": "202bcc0e-d81d-4338-8bdd-68aa5e9b2c38",
+      "name": "Parse call message"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        1440
+      ],
+      "id": "97634729-95f9-4a4d-9629-43308c7ca7f4",
+      "name": "Stop and Error",
+      "disabled": true
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "shared": [
+    {
+      "updatedAt": "2025-11-28T09:28:30.656Z",
+      "createdAt": "2025-11-28T09:28:30.656Z",
+      "role": "workflow:owner",
+      "workflowId": "FG3Z8XLpV4vpe4XN",
+      "projectId": "C2qt4KANuTm5Qu1n"
+    }
+  ],
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-11-28T09:33:27.000Z",
+  "versionId": "23b1e485-a7c8-4c1a-8dc9-0a96d1f3c9cc"
+}
