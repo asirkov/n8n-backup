@@ -1,9 +1,9 @@
 {
   "active": true,
   "activeVersion": {
-    "updatedAt": "2025-12-24T13:08:43.000Z",
-    "createdAt": "2025-12-24T13:08:38.659Z",
-    "versionId": "bb807670-25c0-45bd-a00a-46b637587ea0",
+    "updatedAt": "2025-12-24T13:37:48.000Z",
+    "createdAt": "2025-12-24T13:37:46.127Z",
+    "versionId": "beabcc27-b836-48fa-8468-8df65797dc54",
     "workflowId": "OcbvF7RTkWnIgzby",
     "nodes": [
       {
@@ -35,8 +35,13 @@
       },
       {
         "parameters": {
-          "filters": {},
-          "requestOptions": {}
+          "filters": {
+            "excludePinnedData": true
+          },
+          "requestOptions": {
+            "allowUnauthorizedCerts": true,
+            "timeout": 10000
+          }
         },
         "id": "afaf95c7-5f2b-4ae2-a7de-8730f839d79f",
         "name": "n8n",
@@ -322,8 +327,8 @@
       },
       {
         "parameters": {
-          "content": "## Backup to GitHub \nThis workflow will backup all instance workflows to GitHub.\n\nThe files are saved `ID.json` for the filename.\n\n### Setup\nOpen `Globals` node and update the values below 👇\n\n- **repo.owner:** your Github username\n- **repo.name:** the name of your repository\n- **repo.path:** the folder to use within the repository. If it doesn't exist it will be created.\n\n\nIf your username was `john-doe` and your repository was called `n8n-backups` and you wanted the workflows to go into a `workflows` folder you would set:\n\n- repo.owner - john-doe\n- repo.name - n8n-backups\n- repo.path - workflows/\n\n\nThe workflow calls itself using a subworkflow, to help reduce memory usage.",
-          "height": 601,
+          "content": "## Backup to GitHub \nThis workflow will backup all instance workflows to GitHub.\n\nThe files are saved `ID.json` for the filename.\n\n### Setup\nOpen `Globals` node and update the values below 👇\n\n- **repo.owner:** your Github username\n- **repo.name:** the name of your repository\n- **repo.path:** the folder to use within the repository. If it doesn't exist it will be created.\n\nThe workflow calls itself using a subworkflow, to help reduce memory usage.",
+          "height": 441,
           "width": 371,
           "color": 4
         },
@@ -332,7 +337,7 @@
         "type": "n8n-nodes-base.stickyNote",
         "position": [
           368,
-          240
+          432
         ],
         "typeVersion": 1
       },
@@ -425,22 +430,6 @@
       },
       {
         "parameters": {
-          "content": "## Edit this node 👇",
-          "height": 80,
-          "width": 150,
-          "color": 4
-        },
-        "id": "ffe9f716-11de-46b0-8221-ab4addc6ea1c",
-        "name": "Sticky Note3",
-        "type": "n8n-nodes-base.stickyNote",
-        "position": [
-          688,
-          1040
-        ],
-        "typeVersion": 1
-      },
-      {
-        "parameters": {
           "inputSource": "passthrough"
         },
         "id": "72616fc1-1c21-4f17-862c-2838636437ec",
@@ -478,21 +467,6 @@
           608
         ],
         "typeVersion": 1.2
-      },
-      {
-        "parameters": {
-          "content": "### 💡 **Want to learn advanced n8n skills and earn money building workflows?**\n‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎Check out [Scrapes Academy](https://www.skool.com/scrapes/about?ref=21f10ad99f4d46ba9b8aaea8c9f58c34)",
-          "width": 640,
-          "color": 4
-        },
-        "id": "015a5f28-d1ff-4e3b-a303-6d143c7326b1",
-        "name": "Sticky Note16",
-        "type": "n8n-nodes-base.stickyNote",
-        "position": [
-          768,
-          240
-        ],
-        "typeVersion": 1
       }
     ],
     "connections": {
@@ -723,10 +697,10 @@
       }
     },
     "authors": "Oleksandr Sirkov",
-    "name": "Version bb807670",
+    "name": "Version beabcc27",
     "description": ""
   },
-  "activeVersionId": "bb807670-25c0-45bd-a00a-46b637587ea0",
+  "activeVersionId": "beabcc27-b836-48fa-8468-8df65797dc54",
   "connections": {
     "n8n": {
       "main": [
@@ -1284,7 +1258,7 @@
     {
       "parameters": {
         "content": "## Backup to GitHub \nThis workflow will backup all instance workflows to GitHub.\n\nThe files are saved `ID.json` for the filename.\n\n### Setup\nOpen `Globals` node and update the values below 👇\n\n- **repo.owner:** your Github username\n- **repo.name:** the name of your repository\n- **repo.path:** the folder to use within the repository. If it doesn't exist it will be created.\n\nThe workflow calls itself using a subworkflow, to help reduce memory usage.",
-        "height": 601,
+        "height": 441,
         "width": 371,
         "color": 4
       },
@@ -1293,7 +1267,7 @@
       "type": "n8n-nodes-base.stickyNote",
       "position": [
         368,
-        272
+        432
       ],
       "typeVersion": 1
     },
@@ -1442,6 +1416,6 @@
   },
   "tags": [],
   "triggerCount": 1,
-  "updatedAt": "2025-12-24T13:17:47.372Z",
-  "versionId": "35c48f51-a951-4090-ac9b-3d48c569fba2"
+  "updatedAt": "2025-12-24T13:37:46.126Z",
+  "versionId": "beabcc27-b836-48fa-8468-8df65797dc54"
 }
