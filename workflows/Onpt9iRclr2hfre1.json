@@ -1,0 +1,376 @@
+{
+  "active": false,
+  "activeVersion": null,
+  "activeVersionId": null,
+  "connections": {
+    "Fetch Tweet": {
+      "main": [
+        [
+          {
+            "node": "Check response status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tweet Id Extractor": {
+      "main": [
+        [
+          {
+            "node": "Fetch Tweet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check response status": {
+      "main": [
+        [
+          {
+            "node": "Remove extra data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Response Status Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove extra data": {
+      "main": [
+        [
+          {
+            "node": "Call 'Betting Tips via X (v2)'",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI (grok 4 fast) 1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Tweet Id Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Webhook": {
+      "main": [
+        [
+          {
+            "node": "Tweet Id Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-11-25T16:29:04.003Z",
+  "id": "Onpt9iRclr2hfre1",
+  "isArchived": true,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "Fetch X Post (v1)",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "=https://api.fxtwitter.com/status/{{$json.output.tweet_id}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        160
+      ],
+      "id": "c3a1a546-fde8-45d1-a0b3-d96f792214c3",
+      "name": "Fetch Tweet"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.body.toJsonString() }}",
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\n\t\"tweet_id\": \"\"\n}",
+        "options": {
+          "systemPromptTemplate": "You are an expert extraction algorithm.\nOnly extract relevant information from the text.\nIf you do not know the value of an attribute asked to extract, you may omit the attribute's value.\n\nTwitter post url format:\nhttps://x.com/{{user_name}}/status/{{tweet_id}}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        96
+      ],
+      "id": "6fabcce8-8350-4f56-abb0-a72a24ec94e1",
+      "name": "Tweet Id Extractor",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.code}}",
+                    "rightValue": 200,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "bf24381b-77b6-4f0e-8a37-ab0b4fc3f9d4"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Is OK"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b03b9d1f-fa86-40c3-b57d-c76c313ea819",
+                    "leftValue": "={{ $json.code}}",
+                    "rightValue": 200,
+                    "operator": {
+                      "type": "number",
+                      "operation": "notEquals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Is not OK"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1056,
+        160
+      ],
+      "id": "f4bf36dc-bbe9-4dc7-9bb4-c28929e6367e",
+      "name": "Check response status"
+    },
+    {
+      "parameters": {
+        "errorType": "errorObject",
+        "errorObject": "{\n  \"message\": \"Failed to get tweet data\"\n}"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        288
+      ],
+      "id": "5138cbfc-ce6a-4544-91e9-617cd6555e23",
+      "name": "Response Status Error"
+    },
+    {
+      "parameters": {
+        "content": "## 0. Fetch X post\n",
+        "height": 560,
+        "width": 1248
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        352,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "89e36d83-c1ad-4478-93be-ab24bf27f729",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cccde0e9-4237-49db-88e8-652cb90adf9b",
+              "name": "id",
+              "value": "={{ $json.tweet.id }}",
+              "type": "string"
+            },
+            {
+              "id": "66cfa958-83b1-45a0-8c1a-feddf97998f5",
+              "name": "url",
+              "value": "={{ $json.tweet.url }}",
+              "type": "string"
+            },
+            {
+              "id": "e42bd814-51ba-4e43-b253-524768c90a07",
+              "name": "text",
+              "value": "={{ $json.tweet.text }}",
+              "type": "string"
+            },
+            {
+              "id": "6a47aacd-8d18-44d4-aa92-6c4b3a4ecea5",
+              "name": "photos",
+              "value": "={{ $json.tweet.media?.photos || [] }}",
+              "type": "array"
+            },
+            {
+              "id": "90e47ad3-1e7e-4c10-b896-51c3c5608184",
+              "name": "created_at",
+              "value": "={{ $json.tweet.created_at }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": false
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1328,
+        48
+      ],
+      "id": "4ff07e52-19c3-4d00-979b-df65cddfc099",
+      "name": "Remove extra data"
+    },
+    {
+      "parameters": {
+        "model": "grok-4-fast-non-reasoning",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        480,
+        320
+      ],
+      "id": "ec6ee92f-edf2-455f-8802-e1f3d55b3697",
+      "name": "xAI (grok 4 fast) 1",
+      "credentials": {
+        "xAiApi": {
+          "id": "Y59viheYvrzhJyG3",
+          "name": "DEV xAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ff36f661-459e-4698-a946-69b50742c16f",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        80,
+        96
+      ],
+      "id": "1b52cd3f-20da-47f6-95c8-a4056315acbe",
+      "name": "Trigger Webhook",
+      "webhookId": "ff36f661-459e-4698-a946-69b50742c16f"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Zvwey1JJLLNL7y3X",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Zvwey1JJLLNL7y3X",
+          "cachedResultName": "Betting Tips via X (v2)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {}
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1696,
+        288
+      ],
+      "id": "8c889d49-a639-4a50-a0f9-e62f3f909964",
+      "name": "Call 'Betting Tips via X (v2)'"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/f07b0fac-73d0-4157-a1f0-0ccf658fe91e",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1696,
+        48
+      ],
+      "id": "f6dae84d-f1b0-4549-bf45-a3932645b679",
+      "name": "HTTP Request",
+      "disabled": true
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "shared": [
+    {
+      "updatedAt": "2025-11-25T16:29:04.010Z",
+      "createdAt": "2025-11-25T16:29:04.010Z",
+      "role": "workflow:owner",
+      "workflowId": "Onpt9iRclr2hfre1",
+      "projectId": "C2qt4KANuTm5Qu1n"
+    }
+  ],
+  "staticData": null,
+  "tags": [
+    {
+      "updatedAt": "2025-11-26T08:34:36.429Z",
+      "createdAt": "2025-11-26T08:34:36.429Z",
+      "id": "pYUZ66R3J5xExxf5",
+      "name": "dev"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-24T12:42:57.000Z",
+  "versionId": "c4bc97f5-cc59-4a7d-a965-3f1b193cbb6a"
+}
