@@ -1,9 +1,9 @@
 {
   "active": true,
   "activeVersion": {
-    "updatedAt": "2025-12-24T13:37:48.000Z",
-    "createdAt": "2025-12-24T13:37:46.127Z",
-    "versionId": "beabcc27-b836-48fa-8468-8df65797dc54",
+    "updatedAt": "2025-12-24T13:44:59.000Z",
+    "createdAt": "2025-12-24T13:44:57.788Z",
+    "versionId": "fd7e1277-fd86-498e-9642-e00bc2678bfb",
     "workflowId": "OcbvF7RTkWnIgzby",
     "nodes": [
       {
@@ -20,8 +20,8 @@
       {
         "parameters": {
           "content": "## Subworkflow",
-          "height": 750.8363163824032,
-          "width": 2086.845881354743,
+          "height": 751,
+          "width": 2087,
           "color": 6
         },
         "id": "9a3870e1-e79d-461e-885a-f2e79d76f4e1",
@@ -91,7 +91,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "position": [
           1360,
-          960
+          992
         ],
         "typeVersion": 4.2
       },
@@ -188,7 +188,7 @@
         "type": "n8n-nodes-base.switch",
         "position": [
           1568,
-          1248
+          1216
         ],
         "typeVersion": 1
       },
@@ -281,7 +281,7 @@
         "type": "n8n-nodes-base.github",
         "position": [
           2016,
-          1232
+          1248
         ],
         "webhookId": "a57e71de-4960-4d25-a59f-1a9e2e96aff5",
         "typeVersion": 1,
@@ -379,7 +379,7 @@
         "name": "Get file data",
         "type": "n8n-nodes-base.github",
         "position": [
-          960,
+          944,
           992
         ],
         "webhookId": "743111c3-2c21-4658-8097-a9fe966f43d2",
@@ -424,7 +424,7 @@
         "type": "n8n-nodes-base.set",
         "position": [
           736,
-          1152
+          992
         ],
         "typeVersion": 3.4
       },
@@ -437,7 +437,7 @@
         "type": "n8n-nodes-base.executeWorkflowTrigger",
         "position": [
           448,
-          1264
+          1248
         ],
         "typeVersion": 1.1
       },
@@ -697,10 +697,10 @@
       }
     },
     "authors": "Oleksandr Sirkov",
-    "name": "Version beabcc27",
+    "name": "Version fd7e1277",
     "description": ""
   },
-  "activeVersionId": "beabcc27-b836-48fa-8468-8df65797dc54",
+  "activeVersionId": "fd7e1277-fd86-498e-9642-e00bc2678bfb",
   "connections": {
     "n8n": {
       "main": [
@@ -932,9 +932,10 @@
   "id": "OcbvF7RTkWnIgzby",
   "isArchived": false,
   "meta": {
-    "templateId": "2652"
+    "templateId": "2652",
+    "templateCredsSetupCompleted": true
   },
-  "name": "Backup your workflows to GitHub",
+  "name": "Backup workflows to GitHub",
   "nodes": [
     {
       "parameters": {},
@@ -950,8 +951,8 @@
     {
       "parameters": {
         "content": "## Subworkflow",
-        "height": 750.8363163824032,
-        "width": 2086.845881354743,
+        "height": 751,
+        "width": 2087,
         "color": 6
       },
       "id": "9a3870e1-e79d-461e-885a-f2e79d76f4e1",
@@ -1021,7 +1022,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "position": [
         1360,
-        960
+        992
       ],
       "typeVersion": 4.2
     },
@@ -1118,7 +1119,7 @@
       "type": "n8n-nodes-base.switch",
       "position": [
         1568,
-        1248
+        1216
       ],
       "typeVersion": 1
     },
@@ -1211,7 +1212,7 @@
       "type": "n8n-nodes-base.github",
       "position": [
         2016,
-        1232
+        1248
       ],
       "webhookId": "a57e71de-4960-4d25-a59f-1a9e2e96aff5",
       "typeVersion": 1,
@@ -1309,7 +1310,7 @@
       "name": "Get file data",
       "type": "n8n-nodes-base.github",
       "position": [
-        960,
+        944,
         992
       ],
       "webhookId": "743111c3-2c21-4658-8097-a9fe966f43d2",
@@ -1354,7 +1355,7 @@
       "type": "n8n-nodes-base.set",
       "position": [
         736,
-        1152
+        992
       ],
       "typeVersion": 3.4
     },
@@ -1367,7 +1368,7 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "position": [
         448,
-        1264
+        1248
       ],
       "typeVersion": 1.1
     },
@@ -1411,11 +1412,13 @@
   ],
   "staticData": {
     "node:Schedule Trigger": {
-      "recurrenceRules": []
+      "recurrenceRules": [
+        16
+      ]
     }
   },
   "tags": [],
   "triggerCount": 1,
-  "updatedAt": "2025-12-24T13:37:46.126Z",
-  "versionId": "beabcc27-b836-48fa-8468-8df65797dc54"
+  "updatedAt": "2025-12-24T13:44:57.787Z",
+  "versionId": "fd7e1277-fd86-498e-9642-e00bc2678bfb"
 }
