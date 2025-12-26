@@ -1,9 +1,9 @@
 {
   "active": true,
   "activeVersion": {
-    "updatedAt": "2025-12-24T13:44:59.000Z",
-    "createdAt": "2025-12-24T13:44:57.788Z",
-    "versionId": "fd7e1277-fd86-498e-9642-e00bc2678bfb",
+    "updatedAt": "2025-12-26T13:19:54.000Z",
+    "createdAt": "2025-12-26T13:19:52.412Z",
+    "versionId": "68d5c57b-421e-4392-82a6-c65b46932930",
     "workflowId": "OcbvF7RTkWnIgzby",
     "nodes": [
       {
@@ -310,8 +310,7 @@
           "rule": {
             "interval": [
               {
-                "field": "hours",
-                "hoursInterval": 2
+                "field": "hours"
               }
             ]
           }
@@ -697,10 +696,10 @@
       }
     },
     "authors": "Oleksandr Sirkov",
-    "name": "Version fd7e1277",
+    "name": "Version 68d5c57b",
     "description": ""
   },
-  "activeVersionId": "fd7e1277-fd86-498e-9642-e00bc2678bfb",
+  "activeVersionId": "68d5c57b-421e-4392-82a6-c65b46932930",
   "connections": {
     "n8n": {
       "main": [
@@ -1241,8 +1240,7 @@
         "rule": {
           "interval": [
             {
-              "field": "hours",
-              "hoursInterval": 2
+              "field": "hours"
             }
           ]
         }
@@ -1419,6 +1417,6 @@
   },
   "tags": [],
   "triggerCount": 1,
-  "updatedAt": "2025-12-24T13:44:57.787Z",
-  "versionId": "fd7e1277-fd86-498e-9642-e00bc2678bfb"
+  "updatedAt": "2025-12-26T13:19:52.411Z",
+  "versionId": "68d5c57b-421e-4392-82a6-c65b46932930"
 }
